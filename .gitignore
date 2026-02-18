@@ -1,0 +1,46 @@
+# ── WordPress core ──────────────────────────────────────────
+index.php
+license.txt
+readme.html
+wp-activate.php
+wp-blog-header.php
+wp-comments-post.php
+wp-config-sample.php
+wp-cron.php
+wp-links-opml.php
+wp-load.php
+wp-login.php
+wp-mail.php
+wp-settings.php
+wp-signup.php
+wp-trackback.php
+xmlrpc.php
+local-xdebuginfo.php
+wp-admin/
+wp-includes/
+
+# ── Sensitive config (contains DB credentials) ───────────────
+wp-config.php
+
+# ── wp-content: exclude everything by default ───────────────
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/advanced-cache.php
+wp-content/cache/
+wp-content/backup*/
+wp-content/languages/
+wp-content/mu-plugins/
+
+# Third-party plugins (managed via WP admin / Composer)
+wp-content/plugins/
+
+# Parent theme (not our code)
+wp-content/themes/hello-elementor/
+
+# ── System / editor files ────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+node_modules/
+.env

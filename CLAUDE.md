@@ -1,0 +1,5 @@
+# CLAUDE.md — WordPress Maintenance & Extension
+
+This is a WordPress site where I primarily **maintain, debug, and extend existing functionality**, often written by previous developers. Your role is to help me add new features or modifications **without breaking legacy behavior**. Prefer **additive, backward-compatible changes**, follow existing patterns in the codebase, and use WordPress-native approaches (hooks, filters, CPTs, meta, REST, AJAX). Never edit WordPress core or third-party plugin files. Security, performance, and minimal diff size matter.
+
+Before coding, identify where the logic belongs (theme vs custom plugin vs mu-plugin) and flag any risks (legacy coupling, caching, multilingual, WooCommerce). While coding, keep changes localized, properly prefixed/namespaced, sanitized, escaped, nonce-protected, and capability-checked. After coding, clearly list files touched, explain what changed, how to test it, and any edge cases. If something is unclear or risky (DB changes, auth, checkout, uploads, redirects), stop and ask before proceeding.

@@ -1,0 +1,176 @@
+/*
+ Theme Name:   Hello Elementor Child
+ Theme URI:    https://group247ww.com/
+ Description:  Custom Child theme for Hello Elementor
+ Author:       Jonathan Ortigueras
+ Template:     hello-elementor
+ Version:      1.0.0
+*/
+
+
+/* Custom Gallery */
+.forminator-filter-container {
+    display: flex;
+    margin-bottom: 25px;
+    justify-content: flex-end;
+}
+
+.forminator-filter-container select {
+    max-width: 300px;
+    width: 100%;
+    margin-left: 10px;
+}
+
+.empty-filter-result {
+    text-align: center;
+    color: #aeaeae;
+    padding: 20px 0;
+}
+
+.forminator-lightbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.forminator-image-item-wrapper {
+    overflow: hidden;
+    background: #fff;
+    text-align: center;
+}
+
+.forminator-lightbox-item img {
+    width: 100%;
+    height: 250px!important;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.forminator-lightbox-item:hover img {
+    transform: scale(1.05);
+}
+
+.forminator-image-details {
+    padding: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* ── iWin Leaderboard List ─────────────────────────────────── */
+.iwin-leaderboard-wrap {
+    width: 100%;
+}
+
+/* Column header row */
+.iwin-lb-header {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 10px;
+    border-bottom: 2px solid #1a1a1a;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.iwin-lb-header-rank  { width: 40px; flex-shrink: 0; }
+.iwin-lb-header-agent { flex: 1; padding-left: 60px; } /* 48px avatar + 12px gap */
+.iwin-lb-header-score { width: 60px; text-align: right; flex-shrink: 0; }
+
+/* List reset */
+.iwin-leaderboard-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Each row */
+.iwin-lb-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 8px;
+    border-bottom: 1px solid #efefef;
+    transition: background 0.15s;
+}
+
+.iwin-lb-item:hover        { background-color: #f7fffe; }
+.iwin-lb-item.current-user { background-color: #fffbea; }
+
+/* Rank number */
+.iwin-lb-rank {
+    width: 28px;
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+}
+
+/* Avatar circle */
+.iwin-lb-avatar {
+    flex-shrink: 0;
+}
+
+.iwin-lb-avatar-img,
+.iwin-lb-avatar img {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    display: block;
+}
+
+/* Name + pharmacy stacked */
+.iwin-lb-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.iwin-lb-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.iwin-lb-name:hover { text-decoration: underline; }
+
+.iwin-lb-pharmacy {
+    font-size: 0.78rem;
+    color: #999;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Score */
+.iwin-lb-score {
+    width: 60px;
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: right;
+}
+
+@media (max-width: 767px) {
+    .iwin-lb-item    { padding: 12px 4px; gap: 10px; }
+    .iwin-lb-rank    { width: 22px; font-size: 0.9rem; }
+    .iwin-lb-name    { font-size: 0.9rem; }
+    .iwin-lb-score   { font-size: 0.9rem; width: 48px; }
+    .iwin-lb-pharmacy { font-size: 0.75rem; }
+    .iwin-lb-avatar-img,
+    .iwin-lb-avatar img {
+        width: 38px !important;
+        height: 38px !important;
+    }
+    .iwin-lb-header-agent { padding-left: 48px; }
+}
