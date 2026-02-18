@@ -233,11 +233,11 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 	}
 
 	public function get_group() {
-		return \Elementor\Modules\DynamicTags\Module::USER_GROUP;
+		return 'user'; // equivalent to Elementor\Modules\DynamicTags\Module::USER_GROUP
 	}
 
 	public function get_categories() {
-		return [ \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY ];
+		return [ 'text' ]; // equivalent to Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY
 	}
 
 	protected function register_controls() {
