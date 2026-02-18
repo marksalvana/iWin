@@ -215,9 +215,12 @@ function iwin_user_field_shortcode( $atts ) {
  */
 add_action( 'elementor/dynamic_tags/register', 'iwin_register_dynamic_tags' );
 function iwin_register_dynamic_tags( $manager ) {
-	if ( class_exists( 'IWin_UM_Profile_Field_Tag' ) ) {
-		$manager->register( new IWin_UM_Profile_Field_Tag() );
+	if ( ! class_exists( 'IWin_UM_Profile_Field_Tag' ) ) {
+		return;
 	}
+	// Register a dedicated "User" group so the tag appears in the Elementor panel.
+	$manager->register_group( 'iwin-user', [ 'title' => 'User' ] );
+	$manager->register( new IWin_UM_Profile_Field_Tag() );
 }
 
 if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) :
@@ -233,7 +236,7 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 	}
 
 	public function get_group() {
-		return 'user'; // equivalent to Elementor\Modules\DynamicTags\Module::USER_GROUP
+		return 'iwin-user';
 	}
 
 	public function get_categories() {
