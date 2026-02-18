@@ -172,6 +172,77 @@ function iwin_leaderboard_custom_row( $layout, $template, $user, $position, $que
 }
 
 /**
+ * Custom Elementor Dynamic Tag: "UM Profile User Meta"
+ *
+ * Reads any usermeta key for the UM profile user currently being viewed.
+ * Falls back to the logged-in user when not on a UM profile page.
+ * Appears in Elementor under Dynamic Tags → User → "UM Profile Field".
+ */
+add_action( 'elementor/dynamic_tags/register', 'iwin_register_dynamic_tags' );
+function iwin_register_dynamic_tags( $manager ) {
+	if ( ! class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
+		return;
+	}
+
+	class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
+
+		public function get_name() {
+			return 'iwin-um-profile-field';
+		}
+
+		public function get_title() {
+			return 'UM Profile Field';
+		}
+
+		public function get_group() {
+			return \Elementor\Modules\DynamicTags\Module::USER_GROUP;
+		}
+
+		public function get_categories() {
+			return [ \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY ];
+		}
+
+		protected function register_controls() {
+			$this->add_control(
+				'meta_key',
+				[
+					'label'       => 'Meta Key',
+					'type'        => \Elementor\Controls_Manager::TEXT,
+					'placeholder' => 'e.g. pharmacy',
+					'default'     => 'pharmacy',
+				]
+			);
+		}
+
+		public function render() {
+			$meta_key = sanitize_key( $this->get_settings( 'meta_key' ) );
+			if ( ! $meta_key ) {
+				return;
+			}
+
+			// On a UM profile page, use the profile user; otherwise the logged-in user.
+			$user_id = 0;
+			if ( function_exists( 'um_profile_id' ) ) {
+				$user_id = (int) um_profile_id();
+			}
+			if ( ! $user_id ) {
+				$user_id = get_current_user_id();
+			}
+			if ( ! $user_id ) {
+				return;
+			}
+
+			$value = get_user_meta( $user_id, $meta_key, true );
+			if ( ! empty( $value ) ) {
+				echo esc_html( $value );
+			}
+		}
+	}
+
+	$manager->register( new IWin_UM_Profile_Field_Tag() );
+}
+
+/**
  * Leaderboard: replace the <ol> wrapper with a styled list + column header.
  */
 add_filter( 'mycred_leaderboard', 'iwin_leaderboard_table_wrapper', 10, 3 );
