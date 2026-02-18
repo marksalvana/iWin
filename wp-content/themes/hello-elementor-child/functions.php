@@ -308,6 +308,70 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 endif;
 
 /**
+ * Shortcode: [iwin_profile_rank]
+ *
+ * Renders the myCred rank(s) for the UM profile user currently being viewed.
+ * Falls back to the logged-in user when not on a UM profile page.
+ * Use in an Elementor Shortcode widget on the UM profile template.
+ *
+ * Supports the same attributes as [mycred_user_ranks] (title, image, etc.)
+ */
+add_shortcode( 'iwin_profile_rank', 'iwin_profile_rank_shortcode' );
+function iwin_profile_rank_shortcode( $atts ) {
+	$user_id = 0;
+	if ( function_exists( 'um_profile_id' ) ) {
+		$user_id = (int) um_profile_id();
+	}
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+	if ( ! $user_id ) {
+		return '';
+	}
+
+	// Build attribute string from any extra atts passed to our shortcode.
+	$extra = '';
+	if ( is_array( $atts ) ) {
+		foreach ( $atts as $key => $val ) {
+			$extra .= ' ' . esc_attr( $key ) . '="' . esc_attr( $val ) . '"';
+		}
+	}
+
+	return do_shortcode( '[mycred_user_ranks user_id="' . $user_id . '"' . $extra . ']' );
+}
+
+/**
+ * Shortcode: [iwin_profile_balance]
+ *
+ * Renders the myCred total balance for the UM profile user currently being viewed.
+ * Falls back to the logged-in user when not on a UM profile page.
+ *
+ * Supports the same attributes as [mycred_total_balance] (type, decimals, etc.)
+ */
+add_shortcode( 'iwin_profile_balance', 'iwin_profile_balance_shortcode' );
+function iwin_profile_balance_shortcode( $atts ) {
+	$user_id = 0;
+	if ( function_exists( 'um_profile_id' ) ) {
+		$user_id = (int) um_profile_id();
+	}
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+	if ( ! $user_id ) {
+		return '';
+	}
+
+	$extra = '';
+	if ( is_array( $atts ) ) {
+		foreach ( $atts as $key => $val ) {
+			$extra .= ' ' . esc_attr( $key ) . '="' . esc_attr( $val ) . '"';
+		}
+	}
+
+	return do_shortcode( '[mycred_total_balance user_id="' . $user_id . '"' . $extra . ']' );
+}
+
+/**
  * Leaderboard: replace the <ol> wrapper with a styled list + column header.
  */
 add_filter( 'mycred_leaderboard', 'iwin_leaderboard_table_wrapper', 10, 3 );
