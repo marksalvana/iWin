@@ -240,7 +240,8 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 	}
 
 	public function get_categories() {
-		return [ 'text' ]; // equivalent to Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY
+		// 'text' for string fields; 'number' so it appears on numeric fields (e.g. myCred User ID).
+		return [ 'text', 'number' ];
 	}
 
 	protected function register_controls() {
@@ -270,6 +271,12 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 			$user_id = get_current_user_id();
 		}
 		if ( ! $user_id ) {
+			return;
+		}
+
+		// Special case: return the user ID itself (useful for myCred rank/points widgets).
+		if ( in_array( $meta_key, array( 'user_id', 'id' ), true ) ) {
+			echo esc_html( $user_id );
 			return;
 		}
 
