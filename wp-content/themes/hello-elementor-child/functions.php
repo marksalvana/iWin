@@ -273,7 +273,25 @@ class IWin_UM_Profile_Field_Tag extends \Elementor\Core\DynamicTags\Tag {
 			return;
 		}
 
-		$value = get_user_meta( $user_id, $meta_key, true );
+		// Map friendly keys to core WP user object properties (wp_users table).
+		$core_fields = array(
+			'email'        => 'user_email',
+			'user_email'   => 'user_email',
+			'username'     => 'user_login',
+			'user_login'   => 'user_login',
+			'display_name' => 'display_name',
+			'first_name'   => 'first_name',
+			'last_name'    => 'last_name',
+			'name'         => 'display_name',
+		);
+
+		if ( isset( $core_fields[ $meta_key ] ) ) {
+			$user_data = get_userdata( $user_id );
+			$value     = $user_data ? $user_data->{ $core_fields[ $meta_key ] } : '';
+		} else {
+			$value = get_user_meta( $user_id, $meta_key, true );
+		}
+
 		if ( ! empty( $value ) ) {
 			echo esc_html( $value );
 		}
