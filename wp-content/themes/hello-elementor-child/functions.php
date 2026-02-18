@@ -172,6 +172,37 @@ function iwin_leaderboard_custom_row( $layout, $template, $user, $position, $que
 }
 
 /**
+ * Shortcode: [iwin_user_field field="pharmacy"]
+ *
+ * Fallback for displaying any UM user meta field in Elementor via a
+ * Shortcode widget. Reads the UM profile user when on a profile page,
+ * otherwise falls back to the logged-in user.
+ *
+ * Usage in Elementor Shortcode widget: [iwin_user_field field="pharmacy"]
+ */
+add_shortcode( 'iwin_user_field', 'iwin_user_field_shortcode' );
+function iwin_user_field_shortcode( $atts ) {
+	$atts = shortcode_atts( array( 'field' => '' ), $atts, 'iwin_user_field' );
+	$meta_key = sanitize_key( $atts['field'] );
+	if ( ! $meta_key ) {
+		return '';
+	}
+
+	$user_id = 0;
+	if ( function_exists( 'um_profile_id' ) ) {
+		$user_id = (int) um_profile_id();
+	}
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+	if ( ! $user_id ) {
+		return '';
+	}
+
+	return esc_html( get_user_meta( $user_id, $meta_key, true ) );
+}
+
+/**
  * Custom Elementor Dynamic Tag: "UM Profile User Meta"
  *
  * Reads any usermeta key for the UM profile user currently being viewed.
