@@ -310,11 +310,12 @@ endif;
 /**
  * Shortcode: [iwin_profile_rank]
  *
- * Renders the myCred rank(s) for the UM profile user currently being viewed.
+ * Renders the myCred rank for the UM profile user currently being viewed.
  * Falls back to the logged-in user when not on a UM profile page.
  * Use in an Elementor Shortcode widget on the UM profile template.
  *
- * Supports the same attributes as [mycred_user_ranks] (title, image, etc.)
+ * Supports all attributes of [mycred_my_rank]: show_title, show_logo, logo_size, ctype, first.
+ * Example: [iwin_profile_rank show_title="1" show_logo="1"]
  */
 add_shortcode( 'iwin_profile_rank', 'iwin_profile_rank_shortcode' );
 function iwin_profile_rank_shortcode( $atts ) {
@@ -329,7 +330,7 @@ function iwin_profile_rank_shortcode( $atts ) {
 		return '';
 	}
 
-	// Build attribute string from any extra atts passed to our shortcode.
+	// Pass any extra attributes (show_title, show_logo, ctype, etc.) through to mycred_my_rank.
 	$extra = '';
 	if ( is_array( $atts ) ) {
 		foreach ( $atts as $key => $val ) {
@@ -337,7 +338,8 @@ function iwin_profile_rank_shortcode( $atts ) {
 		}
 	}
 
-	return do_shortcode( '[mycred_user_ranks user_id="' . $user_id . '"' . $extra . ']' );
+	// [mycred_my_rank] is the shortcode used by the myCred "My Rank" Elementor widget.
+	return do_shortcode( '[mycred_my_rank user_id="' . $user_id . '"' . $extra . ']' );
 }
 
 /**
