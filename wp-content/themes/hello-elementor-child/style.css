@@ -187,9 +187,11 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 10px;
+    max-width: 480px;
 }
 .iwin-avatar-option {
     width: 100%;
+    max-width: 72px;
     aspect-ratio: 1;
     border-radius: 50%;
     object-fit: cover;
