@@ -15,6 +15,6 @@
         <option value="Durotuss">Durotuss</option>
         <option value="Difflam">Difflam</option>
         <option value="Betadine">Betadine</option>
-        <option value="Demazin">Demazin</option>
+        <option value="Combined Water">Combined Water</option>
     </select>
 </div>
