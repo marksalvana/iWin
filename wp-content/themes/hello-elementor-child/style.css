@@ -2,7 +2,7 @@
  Theme Name:   Hello Elementor Child
  Theme URI:    https://group247ww.com/
  Description:  Custom Child theme for Hello Elementor
- Author:       Jonathan Ortigueras
+ Author:       Jonathan Ortigueras & Mark Salvana
  Template:     hello-elementor
  Version:      1.0.0
 */
@@ -173,4 +173,41 @@
         height: 38px !important;
     }
     .iwin-lb-header-agent { padding-left: 48px; }
+}
+
+/* ── iWin Preset Avatar Picker ──────────────────────────────── */
+.iwin-avatar-picker {
+    margin: 16px 0 24px;
+}
+.iwin-avatar-picker-label {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.iwin-avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+}
+.iwin-avatar-option {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.2s, transform 0.15s;
+}
+.iwin-avatar-option:hover {
+    border-color: #a8e6dc;
+    transform: scale(1.05);
+}
+.iwin-avatar-option.selected {
+    border-color: #3AB9A0;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px #3AB9A0;
+}
+@media (max-width: 600px) {
+    .iwin-avatar-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }

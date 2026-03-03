@@ -395,3 +395,139 @@ function iwin_leaderboard_table_wrapper( $output, $args, $query ) {
 
 	return $output;
 }
+
+// =============================================================================
+// Preset Avatar Picker
+// Replaces UM's file-upload avatar field with a grid of 18 preset images.
+// On registration and profile edit, users pick one preset; no custom uploads.
+// =============================================================================
+
+/**
+ * Returns an array of preset avatar data.
+ * Each entry: [ 'filename' => 'name.png', 'url' => 'https://…/name.png' ]
+ */
+function iwin_get_preset_avatars() {
+	$dir  = get_stylesheet_directory() . '/assets/images/';
+	$url  = get_stylesheet_directory_uri() . '/assets/images/';
+	$list = [];
+	foreach ( glob( $dir . '*.png' ) as $file ) {
+		$name   = basename( $file );
+		$list[] = [
+			'filename' => $name,
+			'url'      => $url . '/' . rawurlencode( $name ),
+		];
+	}
+	return $list;
+}
+
+/**
+ * Hide the native UM profile photo upload field on register and profile edit forms.
+ */
+add_action( 'um_before_register_fields', 'iwin_hide_um_photo_upload_css' );
+add_action( 'um_before_profile_fields',  'iwin_hide_um_photo_upload_css' );
+function iwin_hide_um_photo_upload_css() {
+	echo '<style>.um-field-profile_photo,.um-profile-photo-wrap,.um-profile-photo{display:none!important}</style>';
+}
+
+/**
+ * Render the preset avatar picker grid after UM form fields.
+ * On profile edit, the user's current selection is pre-highlighted.
+ */
+add_action( 'um_after_register_fields', 'iwin_avatar_picker_html' );
+add_action( 'um_after_profile_fields',  'iwin_avatar_picker_html' );
+function iwin_avatar_picker_html( $args ) {
+	$presets = iwin_get_preset_avatars();
+
+	// Get the stored filename (e.g. "profile_photo.png") to pre-select on profile edit.
+	// We match by comparing the source preset filename to what was previously stored.
+	$stored_source = '';
+	if ( is_user_logged_in() ) {
+		$stored_source = (string) get_user_meta( get_current_user_id(), 'iwin_preset_avatar_source', true );
+	}
+
+	echo '<div class="iwin-avatar-picker">';
+	echo '<p class="iwin-avatar-picker-label">Choose your avatar</p>';
+	echo '<div class="iwin-avatar-grid">';
+	foreach ( $presets as $preset ) {
+		$is_selected = ( $stored_source === $preset['filename'] );
+		$cls         = 'iwin-avatar-option' . ( $is_selected ? ' selected' : '' );
+		echo '<img src="' . esc_url( $preset['url'] ) . '" '
+			. 'class="' . esc_attr( $cls ) . '" '
+			. 'data-filename="' . esc_attr( $preset['filename'] ) . '" '
+			. 'alt="Avatar option" />';
+	}
+	echo '</div>';
+	echo '<input type="hidden" name="iwin_preset_avatar" id="iwin_preset_avatar" value="" />';
+	echo '</div>';
+	?>
+	<script>
+	(function(){
+		var options = document.querySelectorAll('.iwin-avatar-option');
+		var input   = document.getElementById('iwin_preset_avatar');
+		options.forEach(function(img){
+			img.addEventListener('click', function(){
+				options.forEach(function(i){ i.classList.remove('selected'); });
+				img.classList.add('selected');
+				input.value = img.dataset.filename;
+			});
+		});
+	})();
+	</script>
+	<?php
+}
+
+/**
+ * Copy the chosen preset image into the user's UM upload directory and
+ * update the profile_photo meta so UM displays it everywhere.
+ * Also stores the source filename in iwin_preset_avatar_source for
+ * re-selecting the correct avatar on the profile edit form.
+ *
+ * @param int $user_id
+ */
+function iwin_apply_preset_avatar( $user_id ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- UM handles nonce
+	$selected = isset( $_POST['iwin_preset_avatar'] ) ? sanitize_file_name( wp_unslash( $_POST['iwin_preset_avatar'] ) ) : '';
+	if ( empty( $selected ) ) {
+		return;
+	}
+
+	// Whitelist: must exactly match one of our preset filenames.
+	$valid = wp_list_pluck( iwin_get_preset_avatars(), 'filename' );
+	if ( ! in_array( $selected, $valid, true ) ) {
+		return;
+	}
+
+	$source = get_stylesheet_directory() . '/assets/images/' . $selected;
+	if ( ! file_exists( $source ) ) {
+		return;
+	}
+
+	// Ensure the user's UM upload directory exists.
+	$dest_dir = UM()->uploader()->get_upload_base_dir() . $user_id . DIRECTORY_SEPARATOR;
+	wp_mkdir_p( $dest_dir );
+
+	// UM resolves the avatar by looking for "profile_photo.{ext}" in the user dir.
+	$ext       = strtolower( pathinfo( $selected, PATHINFO_EXTENSION ) );
+	$dest_name = 'profile_photo.' . $ext;
+	copy( $source, $dest_dir . $dest_name );
+
+	update_user_meta( $user_id, 'profile_photo', $dest_name );
+	// Store source filename so the picker can re-highlight it on the profile edit form.
+	update_user_meta( $user_id, 'iwin_preset_avatar_source', $selected );
+}
+
+/**
+ * Save preset avatar on new user registration.
+ */
+add_action( 'um_registration_complete', 'iwin_save_preset_avatar_on_register', 10, 3 );
+function iwin_save_preset_avatar_on_register( $user_id, $args, $form_data ) {
+	iwin_apply_preset_avatar( $user_id );
+}
+
+/**
+ * Save preset avatar when user updates their profile.
+ */
+add_action( 'um_user_after_updating_profile', 'iwin_save_preset_avatar_on_profile', 10, 3 );
+function iwin_save_preset_avatar_on_profile( $to_update, $user_id, $form_data ) {
+	iwin_apply_preset_avatar( $user_id );
+}
