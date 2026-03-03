@@ -407,14 +407,25 @@ function iwin_leaderboard_table_wrapper( $output, $args, $query ) {
  * Each entry: [ 'filename' => 'name.png', 'url' => 'https://…/name.png' ]
  */
 function iwin_get_preset_avatars() {
-	$dir  = get_stylesheet_directory() . '/assets/images/';
-	$url  = get_stylesheet_directory_uri() . '/assets/images/';
+	$src_dir = get_stylesheet_directory() . '/assets/images/';
+
+	// Serve images from wp-content/uploads/iwin-presets/ so they are always
+	// publicly accessible (WP Engine blocks direct access to theme subdirs).
+	$upload   = wp_upload_dir();
+	$dest_dir = $upload['basedir'] . '/iwin-presets/';
+	$dest_url = $upload['baseurl'] . '/iwin-presets/';
+	wp_mkdir_p( $dest_dir );
+
 	$list = [];
-	foreach ( glob( $dir . '*.png' ) as $file ) {
-		$name   = basename( $file );
+	foreach ( glob( $src_dir . '*.png' ) as $file ) {
+		$name      = basename( $file );
+		$dest_path = $dest_dir . $name;
+		if ( ! file_exists( $dest_path ) ) {
+			copy( $file, $dest_path );
+		}
 		$list[] = [
 			'filename' => $name,
-			'url'      => $url . rawurlencode( $name ),
+			'url'      => $dest_url . $name,
 		];
 	}
 	return $list;
