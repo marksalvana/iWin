@@ -414,20 +414,35 @@ function iwin_get_preset_avatars() {
 		$name   = basename( $file );
 		$list[] = [
 			'filename' => $name,
-			'url'      => $url . '/' . rawurlencode( $name ),
+			'url'      => $url . rawurlencode( $name ),
 		];
 	}
 	return $list;
 }
 
 /**
- * Hide the native UM profile photo upload field on register and profile edit forms.
+ * Hide the native UM upload controls without hiding the avatar display.
+ *
+ * - .um-field-profile_photo  → upload field inside the UM form builder (registration)
+ * - .um-profile-photo-overlay → camera-hover overlay that opens the upload dialog
+ *
+ * We do NOT hide .um-profile-photo or .um-profile-photo-wrap because those
+ * elements also contain the <img> that renders the chosen avatar.
  */
 add_action( 'um_before_register_fields', 'iwin_hide_um_photo_upload_css' );
 add_action( 'um_before_profile_fields',  'iwin_hide_um_photo_upload_css' );
 function iwin_hide_um_photo_upload_css() {
-	echo '<style>.um-field-profile_photo,.um-profile-photo-wrap,.um-profile-photo{display:none!important}</style>';
+	echo '<style>.um-field-profile_photo,.um-profile-photo-overlay{display:none!important}</style>';
 }
+
+/**
+ * Remove all items from the UM photo dropdown menu so users cannot upload,
+ * change, or remove their avatar via UM's built-in controls.
+ * um_user_photo_menu_view  → menu when the user has no photo yet (view mode)
+ * um_user_photo_menu_edit  → menu when a photo exists and the form is in edit mode
+ */
+add_filter( 'um_user_photo_menu_view', '__return_empty_array' );
+add_filter( 'um_user_photo_menu_edit', '__return_empty_array' );
 
 /**
  * Render the preset avatar picker grid after UM form fields.
@@ -437,19 +452,22 @@ add_action( 'um_after_register_fields', 'iwin_avatar_picker_html' );
 add_action( 'um_after_profile_fields',  'iwin_avatar_picker_html' );
 function iwin_avatar_picker_html( $args ) {
 	$presets = iwin_get_preset_avatars();
+	if ( empty( $presets ) ) {
+		return;
+	}
 
-	// Get the stored filename (e.g. "profile_photo.png") to pre-select on profile edit.
-	// We match by comparing the source preset filename to what was previously stored.
+	// On profile edit use the previously saved preset; on registration default to the first.
 	$stored_source = '';
 	if ( is_user_logged_in() ) {
 		$stored_source = (string) get_user_meta( get_current_user_id(), 'iwin_preset_avatar_source', true );
 	}
+	$current = ! empty( $stored_source ) ? $stored_source : $presets[0]['filename'];
 
 	echo '<div class="iwin-avatar-picker">';
 	echo '<p class="iwin-avatar-picker-label">Choose your avatar</p>';
 	echo '<div class="iwin-avatar-grid">';
 	foreach ( $presets as $preset ) {
-		$is_selected = ( $stored_source === $preset['filename'] );
+		$is_selected = ( $current === $preset['filename'] );
 		$cls         = 'iwin-avatar-option' . ( $is_selected ? ' selected' : '' );
 		echo '<img src="' . esc_url( $preset['url'] ) . '" '
 			. 'class="' . esc_attr( $cls ) . '" '
@@ -457,13 +475,16 @@ function iwin_avatar_picker_html( $args ) {
 			. 'alt="Avatar option" />';
 	}
 	echo '</div>';
-	echo '<input type="hidden" name="iwin_preset_avatar" id="iwin_preset_avatar" value="" />';
+	// Hidden input pre-populated with current/default selection so an avatar is
+	// always submitted even if the user does not click anything.
+	echo '<input type="hidden" name="iwin_preset_avatar" id="iwin_preset_avatar" value="' . esc_attr( $current ) . '" />';
 	echo '</div>';
 	?>
 	<script>
 	(function(){
 		var options = document.querySelectorAll('.iwin-avatar-option');
 		var input   = document.getElementById('iwin_preset_avatar');
+		if ( ! input ) { return; }
 		options.forEach(function(img){
 			img.addEventListener('click', function(){
 				options.forEach(function(i){ i.classList.remove('selected'); });
@@ -486,7 +507,9 @@ function iwin_avatar_picker_html( $args ) {
  */
 function iwin_apply_preset_avatar( $user_id ) {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- UM handles nonce
-	$selected = isset( $_POST['iwin_preset_avatar'] ) ? sanitize_file_name( wp_unslash( $_POST['iwin_preset_avatar'] ) ) : '';
+	// Use sanitize_text_field (not sanitize_file_name) so spaces in preset filenames are preserved.
+	$selected = isset( $_POST['iwin_preset_avatar'] ) ? sanitize_text_field( wp_unslash( $_POST['iwin_preset_avatar'] ) ) : '';
+
 	if ( empty( $selected ) ) {
 		return;
 	}
@@ -509,7 +532,30 @@ function iwin_apply_preset_avatar( $user_id ) {
 	// UM resolves the avatar by looking for "profile_photo.{ext}" in the user dir.
 	$ext       = strtolower( pathinfo( $selected, PATHINFO_EXTENSION ) );
 	$dest_name = 'profile_photo.' . $ext;
-	copy( $source, $dest_dir . $dest_name );
+	$dest_path = $dest_dir . $dest_name;
+
+	if ( ! copy( $source, $dest_path ) ) {
+		return;
+	}
+
+	// Generate thumbnail files at all UM-configured sizes (e.g. profile_photo-96x96.png).
+	// UM's display code looks for these sized variants; without them no avatar renders.
+	$image = wp_get_image_editor( $dest_path );
+	if ( ! is_wp_error( $image ) ) {
+		$thumb_sizes = UM()->options()->get( 'photo_thumb_sizes' );
+		if ( ! empty( $thumb_sizes ) && is_array( $thumb_sizes ) ) {
+			$sizes_array = array();
+			foreach ( $thumb_sizes as $size ) {
+				// crop => true forces exact WxH output so UM finds "profile_photo-96x96.png".
+				$sizes_array[] = array( 'width' => (int) $size, 'height' => (int) $size, 'crop' => true );
+			}
+			$quality = (int) UM()->options()->get( 'image_compression' );
+			if ( $quality > 0 ) {
+				$image->set_quality( $quality );
+			}
+			$image->multi_resize( $sizes_array );
+		}
+	}
 
 	update_user_meta( $user_id, 'profile_photo', $dest_name );
 	// Store source filename so the picker can re-highlight it on the profile edit form.
