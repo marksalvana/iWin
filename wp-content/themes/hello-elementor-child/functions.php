@@ -588,3 +588,18 @@ add_action( 'um_user_after_updating_profile', 'iwin_save_preset_avatar_on_profil
 function iwin_save_preset_avatar_on_profile( $to_update, $user_id, $form_data ) {
 	iwin_apply_preset_avatar( $user_id );
 }
+
+// =============================================================================
+// Pharmacy dropdown — 6,746 store names from the iWin pharmacy list.
+// Uses UM's field-specific filter; no DB writes or UM admin changes needed.
+// Select2 (bundled by UM) provides live search automatically.
+// =============================================================================
+add_filter( 'um_select_dropdown_dynamic_options_pharmacy', 'iwin_pharmacy_dropdown_options' );
+function iwin_pharmacy_dropdown_options( $options ) {
+	static $cache = null;
+	if ( null !== $cache ) {
+		return $cache;
+	}
+	$cache = require get_stylesheet_directory() . '/assets/data/pharmacy-list.php';
+	return $cache;
+}
