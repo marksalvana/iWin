@@ -603,3 +603,41 @@ function iwin_pharmacy_dropdown_options( $options ) {
 	$cache = require get_stylesheet_directory() . '/assets/data/pharmacy-list.php';
 	return $cache;
 }
+
+// =============================================================================
+// Store ID — saved to `store_id` usermeta whenever a pharmacy is selected.
+// Looks up the StoreId from the pharmacy name using the store map data file.
+// Runs server-side so no JS or hidden form field is required.
+// =============================================================================
+
+/**
+ * Saves the StoreId matching the selected pharmacy name to `store_id` usermeta.
+ *
+ * @param int $user_id
+ */
+function iwin_save_store_id( $user_id ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- UM handles nonce
+	$pharmacy = isset( $_POST['pharmacy'] ) ? sanitize_text_field( wp_unslash( $_POST['pharmacy'] ) ) : '';
+	if ( empty( $pharmacy ) ) {
+		return;
+	}
+
+	static $map = null;
+	if ( null === $map ) {
+		$map = require get_stylesheet_directory() . '/assets/data/pharmacy-store-map.php';
+	}
+
+	if ( isset( $map[ $pharmacy ] ) ) {
+		update_user_meta( $user_id, 'store_id', sanitize_text_field( $map[ $pharmacy ] ) );
+	}
+}
+
+add_action( 'um_registration_complete', 'iwin_save_store_id_on_register', 10, 3 );
+function iwin_save_store_id_on_register( $user_id, $args, $form_data ) {
+	iwin_save_store_id( $user_id );
+}
+
+add_action( 'um_user_after_updating_profile', 'iwin_save_store_id_on_profile', 10, 3 );
+function iwin_save_store_id_on_profile( $to_update, $user_id, $form_data ) {
+	iwin_save_store_id( $user_id );
+}
