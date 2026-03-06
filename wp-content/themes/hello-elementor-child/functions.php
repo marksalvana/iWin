@@ -643,13 +643,13 @@ function iwin_save_store_id_on_profile( $to_update, $user_id, $form_data ) {
 }
 
 // =============================================================================
-// myCred — Award 3 points when a logged-in user clicks <a class="3points">.
+// myCred — Award 2 points when a logged-in user clicks <a class="3points">.
 // Uses a custom AJAX endpoint + navigator.sendBeacon (fire-and-forget so the
 // request survives navigation without blocking the click).
 // =============================================================================
 
 /**
- * AJAX handler: validates nonce then awards 3 points via mycred_add().
+ * AJAX handler: validates nonce then awards 2 points via mycred_add().
  * Registered for authenticated users only; anonymous clicks do nothing.
  */
 add_action( 'wp_ajax_iwin_link_click', 'iwin_handle_link_click' );
@@ -677,7 +677,7 @@ function iwin_handle_link_click() {
 	$clicked[] = $link_key;
 	update_user_meta( $user_id, 'iwin_clicked_links', $clicked );
 
-	mycred_add( 'iwin_link_click', $user_id, 3, '%plural% for clicking a learning material', 0, [ 'href' => $href ] );
+	mycred_add( 'iwin_link_click', $user_id, 2, '%plural% for clicking a learning material', 0, [ 'href' => $href ] );
 	wp_send_json_success();
 }
 
