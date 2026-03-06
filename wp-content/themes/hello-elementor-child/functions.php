@@ -164,7 +164,7 @@ function iwin_leaderboard_custom_row( $layout, $template, $user, $position, $que
 		. '<span class="iwin-lb-rank">' . absint( $position ) . '</span>'
 		. '<div class="iwin-lb-avatar">' . $avatar . '</div>'
 		. '<div class="iwin-lb-info">'
-			. '<a href="' . $profile_url . '" class="iwin-lb-name">' . $display . '</a>'
+			. '<span>' . $display . '</span>'
 			. $pharmacy_html
 		. '</div>'
 		. '<span class="iwin-lb-score">' . esc_html( $user['cred'] ) . '</span>'
@@ -640,4 +640,61 @@ function iwin_save_store_id_on_register( $user_id, $args, $form_data ) {
 add_action( 'um_user_after_updating_profile', 'iwin_save_store_id_on_profile', 10, 3 );
 function iwin_save_store_id_on_profile( $to_update, $user_id, $form_data ) {
 	iwin_save_store_id( $user_id );
+}
+
+// =============================================================================
+// myCred — Award 3 points when a logged-in user clicks <a class="3points">.
+// Uses a custom AJAX endpoint + navigator.sendBeacon (fire-and-forget so the
+// request survives navigation without blocking the click).
+// =============================================================================
+
+/**
+ * AJAX handler: validates nonce then awards 3 points via mycred_add().
+ * Registered for authenticated users only; anonymous clicks do nothing.
+ */
+add_action( 'wp_ajax_iwin_link_click', 'iwin_handle_link_click' );
+function iwin_handle_link_click() {
+	check_ajax_referer( 'iwin_link_click', 'nonce' );
+	$user_id = get_current_user_id();
+	if ( ! $user_id ) {
+		wp_send_json_error( 'not_logged_in' );
+	}
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+	$href = isset( $_POST['href'] ) ? esc_url_raw( wp_unslash( $_POST['href'] ) ) : '';
+	mycred_add( 'iwin_link_click', $user_id, 3, '%plural% for clicking a link', 0, [ 'href' => $href ] );
+	wp_send_json_success();
+}
+
+/**
+ * Output nonce + delegated click listener into the footer.
+ * Only rendered for logged-in users; guests are skipped entirely.
+ */
+add_action( 'wp_footer', 'iwin_link_click_footer_script' );
+function iwin_link_click_footer_script() {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+	?>
+	<script>
+	(function(){
+		var ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+		var nonce   = <?php echo wp_json_encode( wp_create_nonce( 'iwin_link_click' ) ); ?>;
+
+		document.addEventListener('click', function(e) {
+			var link = e.target.closest('a');
+			if ( ! link || ! link.classList.contains('3points') ) { return; }
+			var href = link.getAttribute('href') || '';
+			var fd = new FormData();
+			fd.append('action', 'iwin_link_click');
+			fd.append('nonce', nonce);
+			fd.append('href', href);
+			if ( navigator.sendBeacon ) {
+				navigator.sendBeacon(ajaxUrl, fd);
+			} else {
+				fetch(ajaxUrl, { method: 'POST', body: fd, keepalive: true });
+			}
+		});
+	})();
+	</script>
+	<?php
 }
