@@ -660,8 +660,24 @@ function iwin_handle_link_click() {
 		wp_send_json_error( 'not_logged_in' );
 	}
 	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-	$href = isset( $_POST['href'] ) ? esc_url_raw( wp_unslash( $_POST['href'] ) ) : '';
-	mycred_add( 'iwin_link_click', $user_id, 3, '%plural% for clicking a link', 0, [ 'href' => $href ] );
+	$href     = isset( $_POST['href'] ) ? esc_url_raw( wp_unslash( $_POST['href'] ) ) : '';
+	$link_key = md5( $href ); // compact hash used as the list key
+
+	// Each user can only earn points once per unique link.
+	$clicked = get_user_meta( $user_id, 'iwin_clicked_links', true );
+	if ( ! is_array( $clicked ) ) {
+		$clicked = [];
+	}
+	if ( in_array( $link_key, $clicked, true ) ) {
+		wp_send_json_error( 'already_awarded' );
+		return;
+	}
+
+	// Record the click before awarding to guard against rapid double-submissions.
+	$clicked[] = $link_key;
+	update_user_meta( $user_id, 'iwin_clicked_links', $clicked );
+
+	mycred_add( 'iwin_link_click', $user_id, 3, '%plural% for clicking a learning material', 0, [ 'href' => $href ] );
 	wp_send_json_success();
 }
 
